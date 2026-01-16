@@ -57,7 +57,7 @@ export function SupplierCard({ supplier, onRefresh }: SupplierCardProps) {
   };
 
   const getSupplierContact = () => {
-    return (supplier as any).contacto || (supplier as any).contact || (supplier as any).contactName || null;
+    return supplier.contact || (supplier as any).contacto || (supplier as any).contactName || null;
   };
 
   const getSupplierStatus = () => {

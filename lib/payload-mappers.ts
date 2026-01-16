@@ -83,6 +83,7 @@ export function mapCreateSupplierPayload(form: Record<string, unknown>): {
   cuit?: string;
   email?: string;
   phone?: string;
+  contact?: string;
   category?: string;
   status?: "provisional" | "approved" | "blocked" | "rejected";
   type?: "labor" | "materials" | "contractor" | "services" | "logistics" | "other";
@@ -94,6 +95,7 @@ export function mapCreateSupplierPayload(form: Record<string, unknown>): {
     cuit?: string;
     email?: string;
     phone?: string;
+    contact?: string;
     category?: string;
     status?: "provisional" | "approved" | "blocked" | "rejected";
     type?: "labor" | "materials" | "contractor" | "services" | "logistics" | "other";
@@ -104,6 +106,7 @@ export function mapCreateSupplierPayload(form: Record<string, unknown>): {
     cuit: typeof form.cuit === "string" ? form.cuit.trim() : undefined,
     email: typeof form.email === "string" ? form.email.trim() : undefined,
     phone: (typeof form.telefono === "string" ? form.telefono : typeof form.phone === "string" ? form.phone : undefined)?.trim() || undefined,
+    contact: (typeof form.contacto === "string" ? form.contacto : typeof form.contactName === "string" ? form.contactName : typeof form.contact === "string" ? form.contact : undefined)?.trim() || undefined,
     category: typeof form.category === "string" ? form.category.trim() : undefined,
     status: (form.existstatus || form.status) as "provisional" | "approved" | "blocked" | "rejected" | undefined,
     address: (typeof form.direccion === "string" ? form.direccion : typeof form.address === "string" ? form.address : undefined)?.trim() || undefined,

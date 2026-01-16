@@ -33,6 +33,9 @@ export interface Supplier {
   cuit?: string;
   email?: string;
   phone?: string;
+  contact?: string;
+  contacto?: string; // Alias para contact
+  contactName?: string; // Alias para contact
   category?: string;
   status?: SupplierStatus | string;
   estado?: string; // Alias para status
@@ -58,6 +61,7 @@ export interface CreateSupplierData {
   cuit?: string;
   email?: string;
   phone?: string;
+  contact?: string;
   category?: string;
   status?: SupplierStatus;
   type?: SupplierType;
@@ -71,6 +75,7 @@ export interface UpdateSupplierData {
   cuit?: string;
   email?: string;
   phone?: string;
+  contact?: string;
   category?: string;
   status?: SupplierStatus;
   type?: SupplierType;
