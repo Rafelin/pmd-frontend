@@ -26,6 +26,8 @@ import {
   FileCheck,
   TrendingUp,
   FolderTree,
+  Users,
+  CalendarCheck,
 } from "lucide-react";
 
 interface NavItem {
@@ -55,6 +57,10 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { label: "Ingresos", href: "/incomes", icon: TrendingUp, permission: "incomes.read", section: "Operaciones" },
   { label: "Cajas", href: "/cashbox", icon: Wallet, permission: "cashboxes.read", section: "Operaciones" },
   { label: "Documentación", href: "/documents", icon: FileText, permission: "documents.read", section: "Operaciones" },
+  
+  // RRHH
+  { label: "Empleados", href: "/rrhh", icon: Users, permission: "employees.read", section: "RRHH" },
+  { label: "Control de Asistencia", href: "/attendance", icon: CalendarCheck, permission: "attendance.read", section: "RRHH" },
   
   // Administración
   { label: "Contabilidad", href: "/accounting", icon: Calculator, permission: "accounting.read", section: "Administración" },
@@ -94,6 +100,8 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const canAccounting = useCan("accounting.read");
   const canCashbox = useCan("cashboxes.read");
   const canDocuments = useCan("documents.read");
+  const canEmployees = useCan("employees.read");
+  const canAttendance = useCan("attendance.read");
   const canAlerts = useCan("alerts.read");
   const canAudit = useCan("audit.read");
   const canUsers = useCan("users.read");
@@ -154,6 +162,12 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
         case "documents.read":
           hasPermission = canDocuments;
           break;
+        case "employees.read":
+          hasPermission = canEmployees;
+          break;
+        case "attendance.read":
+          hasPermission = canAttendance;
+          break;
         case "alerts.read":
           hasPermission = canAlerts;
           break;
@@ -189,7 +203,7 @@ function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
     }
     
     return filtered;
-  }, [user, canWorks, canSuppliers, canExpenses, canContracts, canIncomes, canAccounting, canCashbox, canDocuments, canAlerts, canAudit, canUsers, canRoles, canSettings]);
+  }, [user, canWorks, canSuppliers, canExpenses, canContracts, canIncomes, canAccounting, canCashbox, canDocuments, canEmployees, canAttendance, canAlerts, canAudit, canUsers, canRoles, canSettings]);
 
   // Memoizar agrupación por sección - antes del early return
   const itemsBySection = useMemo(() => {
