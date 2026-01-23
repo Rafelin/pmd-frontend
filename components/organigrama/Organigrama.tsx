@@ -39,7 +39,7 @@ export function Organigrama({ employees }: OrganigramaProps) {
     const grupos: Record<string, Employee[]> = {};
 
     employees.forEach((emp) => {
-      const area = emp.area || emp.areaTrabajo || "Sin área";
+      const area = emp.area || (emp as any).areaTrabajo || "Sin área";
       const areaTraducida = translateArea(area);
       
       if (!grupos[areaTraducida]) {

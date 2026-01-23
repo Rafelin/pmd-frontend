@@ -18,9 +18,9 @@ export function EmployeeNode({ employee, isFirst = false, isLast = false }: Empl
 
   const nombre = employee.nombre || employee.fullName || employee.name || "Sin nombre";
   const puesto = employee.puesto || employee.position || "Sin puesto";
-  const area = employee.area || employee.areaTrabajo || "";
+  const area = employee.area || (employee as any).areaTrabajo || "";
   const seguro = employee.seguro || employee.insurance;
-  const fechaVencimiento = seguro?.fechaVencimiento || seguro?.expirationDate;
+  const fechaVencimiento = (seguro?.fechaVencimiento || seguro?.expirationDate) as string | Date | null | undefined;
   const estadoSeguro = calcularEstadoSeguro(fechaVencimiento);
 
   return (

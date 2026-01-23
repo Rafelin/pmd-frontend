@@ -26,6 +26,7 @@ import { useAuthStore } from "@/store/authStore";
 export type Permission = 
   | "works.read" | "works.create" | "works.update" | "works.delete" | "works.manage"
   | "staff.read" | "staff.create" | "staff.update" | "staff.delete" | "staff.manage"
+  | "employees.read" | "employees.create" | "employees.update" | "employees.delete" | "employees.manage"
   | "suppliers.read" | "suppliers.create" | "suppliers.update" | "suppliers.delete" | "suppliers.manage" | "suppliers.approve" | "suppliers.reject"
   | "expenses.read" | "expenses.create" | "expenses.update" | "expenses.delete" | "expenses.manage" | "expenses.validate"
   | "contracts.read" | "contracts.create" | "contracts.update" | "contracts.delete" | "contracts.manage"

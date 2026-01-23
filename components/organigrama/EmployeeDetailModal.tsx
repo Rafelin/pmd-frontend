@@ -50,7 +50,7 @@ export function EmployeeDetailModal({
   const roleName = role?.name || roleId || "Sin rol";
   const subrole = (employee as any).subrole || "";
   const isActive = employee.isActive !== false;
-  const workName = getWorkName(employee.workId);
+  const workName = getWorkName(employee.workId ?? undefined);
   const workId = employee.workId;
   const employeeAlerts = alerts.filter((alert: Alert) => {
     // Check if alert is related to this employee via user_id or metadata

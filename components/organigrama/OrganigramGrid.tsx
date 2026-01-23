@@ -74,7 +74,7 @@ export function OrganigramGrid({
         const role = getRoleName(roleId) || (employee as any).role || "Sin rol";
         const subrole = (employee as any).subrole || "";
         const isActive = employee.isActive !== false;
-        const workName = getWorkName(employee.workId);
+        const workName = getWorkName(employee.workId ?? undefined);
         const workId = employee.workId;
         const employeeAlerts = getEmployeeAlerts(employee.id);
         const hasAlerts = employeeAlerts.length > 0;

@@ -212,7 +212,7 @@ export function OrganigramTree({ employees, onEmployeeClick }: OrganigramTreePro
             {node.employees.map((employee) => {
               const name = employee.fullName || employee.name || employee.nombre || "Sin nombre";
               const isActive = employee.isActive !== false;
-              const workName = getWorkName(employee.workId);
+              const workName = getWorkName(employee.workId ?? undefined);
               const employeeAlerts = getEmployeeAlerts(employee.id);
               const hasAlerts = employeeAlerts.length > 0;
               const unreadAlerts = employeeAlerts.filter((a) => !a.read).length;
