@@ -48,18 +48,29 @@ export function useAttendance(filters?: {
   };
 }
 
-export function useAttendanceWeek(weekStartDate: string | null) {
+export function useAttendanceWeek(
+  weekStartDate: string | null,
+  filters?: { filterByOrganization?: boolean },
+) {
   const { token } = useAuthStore();
   
   if (!weekStartDate) {
     return { attendance: [], error: null, isLoading: false, mutate: async () => {} };
   }
   
-  const { data, error, isLoading, mutate } = useSWR(
-    token && weekStartDate ? `attendance/week/${weekStartDate}` : null,
-    () => {
-      return apiClient.get(`/attendance/week/${weekStartDate}`);
+  const fetcher = () => {
+    const params = new URLSearchParams();
+    if (filters?.filterByOrganization) {
+      params.append('filterByOrganization', 'true');
     }
+    const qs = params.toString();
+    const url = qs ? `/attendance/week/${weekStartDate}?${qs}` : `/attendance/week/${weekStartDate}`;
+    return apiClient.get(url);
+  };
+
+  const { data, error, isLoading, mutate } = useSWR(
+    token && weekStartDate ? ['attendance/week', weekStartDate, filters] : null,
+    fetcher
   );
 
   return {

@@ -9,9 +9,15 @@ export async function GET(
 ) {
   try {
     const authHeader = request.headers.get("authorization");
+    const { searchParams } = new URL(request.url);
+
+    const qs = searchParams.toString();
+    const url = qs
+      ? `${BACKEND_URL}/api/attendance/week/${params.week_start_date}?${qs}`
+      : `${BACKEND_URL}/api/attendance/week/${params.week_start_date}`;
 
     const response = await fetch(
-      `${BACKEND_URL}/api/attendance/week/${params.week_start_date}`,
+      url,
       {
         method: "GET",
         headers: {

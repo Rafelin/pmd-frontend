@@ -46,7 +46,7 @@ function WeeklyAttendanceContent({ date }: { date: string }) {
   const weekStartDateStr = formatDate(weekStartDate);
 
   const { attendance, isLoading: isLoadingAttendance, error: attendanceError, mutate } =
-    useAttendanceWeek(weekStartDateStr);
+    useAttendanceWeek(weekStartDateStr, { filterByOrganization });
   const {
     employees,
     isLoading: isLoadingEmployees,
