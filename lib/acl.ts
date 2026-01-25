@@ -29,6 +29,7 @@ export type Permission =
   | "employees.read" | "employees.create" | "employees.update" | "employees.delete" | "employees.manage"
   | "attendance.read" | "attendance.create" | "attendance.update" | "attendance.delete" | "attendance.manage"
   | "employee_advances.read" | "employee_advances.create" | "employee_advances.update" | "employee_advances.delete" | "employee_advances.manage"
+  | "payroll.read" | "payroll.create" | "payroll.update" | "payroll.delete" | "payroll.manage"
   | "suppliers.read" | "suppliers.create" | "suppliers.update" | "suppliers.delete" | "suppliers.manage" | "suppliers.approve" | "suppliers.reject"
   | "expenses.read" | "expenses.create" | "expenses.update" | "expenses.delete" | "expenses.manage" | "expenses.validate"
   | "contracts.read" | "contracts.create" | "contracts.update" | "contracts.delete" | "contracts.manage"
