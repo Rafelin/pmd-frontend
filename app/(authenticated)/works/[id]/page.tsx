@@ -7,6 +7,8 @@ import { useWork, workApi } from "@/hooks/api/works";
 import { useUsers } from "@/hooks/api/users";
 import { useSuppliers } from "@/hooks/api/suppliers";
 import { useContracts } from "@/hooks/api/contracts";
+import { useEmployees } from "@/hooks/api/employees";
+import { useContractorCertifications } from "@/hooks/api/contractorCertifications";
 import { contractApi } from "@/hooks/api/contracts";
 import { workUsersApi } from "@/hooks/api/work-users";
 import { AssignUserModal } from "@/components/works/AssignUserModal";
@@ -26,6 +28,7 @@ import { useAuthStore } from "@/store/authStore";
 import { UpdateWorkData, Currency } from "@/lib/types/work";
 import { User } from "@/lib/types/user";
 import { Supplier } from "@/lib/types/supplier";
+import { Employee } from "@/lib/types/employee";
 import { ProgressIndicators } from "@/components/works/ProgressIndicators";
 import { useCan } from "@/lib/acl";
 
@@ -37,6 +40,8 @@ function WorkDetailContent() {
   const { users } = useUsers();
   const { suppliers } = useSuppliers();
   const { contracts, mutate: mutateContracts } = useContracts();
+  const { employees, isLoading: isLoadingEmployees } = useEmployees({ work_id: id || undefined, isActive: true });
+  const { certifications: contractorCertifications } = useContractorCertifications({ enabled: !!id });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
@@ -372,6 +377,11 @@ function WorkDetailContent() {
     })
     .filter((supplier: Supplier | undefined) => supplier !== undefined) as Supplier[];
 
+  // Obtener contratistas (Supplier tipo CONTRACTOR) de esta obra
+  const contractors = assignedSuppliers.filter(
+    (s: Supplier) => s.type === "contractor" || s.type === "CONTRACTOR"
+  );
+
   return (
     <>
       <div className="space-y-6">
@@ -646,6 +656,140 @@ function WorkDetailContent() {
               </div>
             ) : (
               <p className="text-gray-500">No hay proveedores asignados a esta obra</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Empleados de la Obra (Fase 7) */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Empleados de la Obra</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/rrhh?work_id=${id}`)}
+              >
+                Ver todos los empleados
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoadingEmployees ? (
+              <p className="text-gray-500">Cargando empleados...</p>
+            ) : employees && employees.length > 0 ? (
+              <div className="space-y-2">
+                {employees.slice(0, 5).map((emp: any) => {
+                  const nombre = emp.fullName || emp.name || "Sin nombre";
+                  const trade = emp.trade || "-";
+                  const dailySalary = emp.daily_salary
+                    ? formatCurrency(emp.daily_salary, work.currency)
+                    : "-";
+                  return (
+                    <div key={emp.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-gray-900">{nombre}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <p className="text-sm text-gray-500">Rubro: {trade}</p>
+                          {dailySalary !== "-" && (
+                            <p className="text-sm text-gray-500">Salario diario: {dailySalary}</p>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/rrhh/${emp.id}`)}
+                      >
+                        Ver detalle
+                      </Button>
+                    </div>
+                  );
+                })}
+                {employees.length > 5 && (
+                  <div className="text-center pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/rrhh?work_id=${id}`)}
+                    >
+                      Ver {employees.length - 5} empleados más
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-gray-500">No hay empleados asignados a esta obra</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Contratistas de la Obra (Fase 7) */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Contratistas de la Obra</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/suppliers?type=contractor&work_id=${id}`)}
+              >
+                Ver todos los contratistas
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {contractors.length > 0 ? (
+              <div className="space-y-2">
+                {contractors.slice(0, 5).map((contractor: Supplier) => {
+                  const nombre = contractor.name || contractor.nombre || "Sin nombre";
+                  const budget = contractor.contractor_budget
+                    ? formatCurrency(contractor.contractor_budget, work.currency)
+                    : null;
+                  const remaining = contractor.contractor_remaining_balance
+                    ? formatCurrency(contractor.contractor_remaining_balance, work.currency)
+                    : null;
+                  const totalPaid = contractor.contractor_total_paid
+                    ? formatCurrency(contractor.contractor_total_paid, work.currency)
+                    : null;
+                  return (
+                    <div key={contractor.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{nombre}</p>
+                        <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                          {budget && <span>Presupuesto: {budget}</span>}
+                          {totalPaid && <span>Pagado: {totalPaid}</span>}
+                          {remaining !== null && (
+                            <span className={Number(contractor.contractor_remaining_balance || 0) < 0 ? "text-red-600 font-semibold" : ""}>
+                              Saldo: {remaining}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/suppliers/${contractor.id}`)}
+                      >
+                        Ver detalle
+                      </Button>
+                    </div>
+                  );
+                })}
+                {contractors.length > 5 && (
+                  <div className="text-center pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/suppliers?type=contractor&work_id=${id}`)}
+                    >
+                      Ver {contractors.length - 5} contratistas más
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-gray-500">No hay contratistas asignados a esta obra</p>
             )}
           </CardContent>
         </Card>
