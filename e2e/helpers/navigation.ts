@@ -37,6 +37,7 @@ const MENU_ROUTE_MAP: Record<string, RegExp> = {
   'Caja': /\/cashbox/, // Alias para "Cajas"
   'Cajas': /\/cashbox/,
   'Documentación': /\/documents/,
+  'Recibos': /\/receipts/,
   'Contabilidad': /\/accounting/,
   'Alertas': /\/alerts/,
   'Auditoría': /\/audit/,

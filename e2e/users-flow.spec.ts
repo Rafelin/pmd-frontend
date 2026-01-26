@@ -40,6 +40,8 @@ test.describe('Flujo de Usuarios', () => {
     await fillField(page, 'Email', `test${timestamp}@pmd.com`);
     await fillField(page, 'Nombre Completo', `Usuario Test ${timestamp}`);
     await fillField(page, 'Contraseña', 'password123');
+    // El formulario requiere confirmación de contraseña
+    await fillField(page, 'Repetir Contraseña', 'password123');
     
     // Seleccionar rol
     await selectOption(page, 'Rol', 'operator');

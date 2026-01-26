@@ -12,12 +12,15 @@ import { Modal } from "@/components/ui/Modal";
 import { SupplierForm } from "@/components/forms/SupplierForm";
 import { useToast } from "@/components/ui/Toast";
 import { Plus } from "lucide-react";
-import { Supplier, CreateSupplierData, UpdateSupplierData } from "@/lib/types/supplier";
+import { Supplier, CreateSupplierData, UpdateSupplierData, SupplierType } from "@/lib/types/supplier";
 import { parseBackendError } from "@/lib/parse-backend-error";
 import { useCan } from "@/lib/acl";
 
 function SuppliersContent() {
-  const { suppliers, isLoading, error, mutate } = useSuppliers();
+  const [contractorsOnly, setContractorsOnly] = useState(false);
+  const { suppliers, isLoading, error, mutate } = useSuppliers({
+    type: contractorsOnly ? SupplierType.CONTRACTOR : undefined,
+  });
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filter, setFilter] = useState<"all" | "provisional" | "approved" | "blocked" | "rejected">("all");
@@ -105,6 +108,19 @@ function SuppliersContent() {
         </div>
 
         {/* Filtros */}
+        <div className="mb-4 flex gap-2 flex-wrap items-center">
+          <button
+            onClick={() => setContractorsOnly((v) => !v)}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+              contractorsOnly
+                ? "bg-pmd-darkBlue text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {contractorsOnly ? "Solo contratistas" : "Todos los proveedores"}
+          </button>
+        </div>
+
         <div className="mb-6 flex gap-2 flex-wrap">
           {(["all", "provisional", "approved", "blocked", "rejected"] as const).map((f) => {
             const filterLabels: Record<typeof f, string> = {

@@ -12,6 +12,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1, // Usar solo 1 worker para evitar problemas de recursos
+  // Seed mínimo para que los E2E no dependan del orden ni de datos manuales
+  globalSetup: require.resolve('./e2e/global-setup'),
   reporter: [
     ['html'],
     ['list'],

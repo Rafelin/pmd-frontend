@@ -134,12 +134,11 @@ test.describe('Flujo de Caja', () => {
       // Esperar modal de confirmación
       await waitForModal(page);
       
-      // Llenar saldos de cierre
-      await fillField(page, 'Saldo Final ARS', '10000');
-      await fillField(page, 'Saldo Final USD', '100');
+      // Llenar saldo de cierre real (UI actual)
+      await fillField(page, 'Saldo de Cierre Real (ARS)', '10000');
       
       // Confirmar cierre
-      const confirmButton = page.locator('button:has-text("Confirmar"), button:has-text("Cerrar")').first();
+      const confirmButton = page.locator('button:has-text("Cerrar Caja"), button:has-text("Confirmar"), button:has-text("Cerrar")').first();
       await confirmButton.click();
       
       // Verificar mensaje de éxito
@@ -177,10 +176,9 @@ test.describe('Flujo de Caja', () => {
       await waitForModal(page);
       
       // Cerrar con saldo diferente (simulando diferencia)
-      await fillField(page, 'Saldo Final ARS', '9500'); // Diferencia de 500
-      await fillField(page, 'Saldo Final USD', '100');
+      await fillField(page, 'Saldo de Cierre Real (ARS)', '9500'); // Diferencia vs saldo calculado
       
-      const confirmButton = page.locator('button:has-text("Confirmar")').first();
+      const confirmButton = page.locator('button:has-text("Cerrar Caja"), button:has-text("Confirmar")').first();
       await confirmButton.click();
       
       // Verificar que se genera alerta

@@ -112,4 +112,10 @@ export const expenseApi = {
     const response = await apiClient.get<Expense>(`/expenses/${id}`);
     return (response as any)?.data || response;
   },
+  createFromCertification: (certificationId: string) => {
+    if (!certificationId) {
+      throw new Error("ID de certificación no está definido");
+    }
+    return apiClient.post<Expense>(`/expenses/from-certification/${certificationId}`, {});
+  },
 };

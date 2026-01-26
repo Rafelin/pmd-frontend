@@ -3,15 +3,27 @@ import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { Supplier, CreateSupplierData, UpdateSupplierData } from "@/lib/types/supplier";
 
-export function useSuppliers() {
+export function useSuppliers(options?: { type?: string; filterByOrganization?: boolean }) {
   const { token } = useAuthStore();
   
-  const fetcher = () => {
-    return apiClient.get("/suppliers");
+  const fetcher = (key: [string, string, string]) => {
+    const [, type, filterByOrganization] = key;
+    const params = new URLSearchParams();
+    if (type) params.set("type", type);
+    if (filterByOrganization === "1") params.set("filterByOrganization", "true");
+    const qs = params.toString();
+    const url = qs ? `/suppliers?${qs}` : "/suppliers";
+    return apiClient.get(url);
   };
   
   const { data, error, isLoading, mutate } = useSWR(
-    token ? "suppliers" : null,
+    token
+      ? ([
+          "suppliers",
+          options?.type ? String(options.type) : "",
+          options?.filterByOrganization ? "1" : "0",
+        ] as const)
+      : null,
     fetcher
   );
 

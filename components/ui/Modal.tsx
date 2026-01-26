@@ -84,6 +84,9 @@ export function Modal({
     >
       <div
         className={cn(styles.modal, sizeClass, className)}
+        role="dialog"
+        aria-modal="true"
+        data-testid="modal"
         onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>

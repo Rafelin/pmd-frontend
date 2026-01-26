@@ -16,6 +16,11 @@ const customJestConfig = {
     '**/__tests__/**/*.[jt]s?(x)',
     '**/?(*.)+(spec|test).[jt]s?(x)',
   ],
+  // No ejecutar Playwright E2E con Jest; se ejecutan con `npm run test:e2e`
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/', '<rootDir>/e2e/'],
+  // Evita que Jest escanee artefactos de build (p.ej. `.next/standalone/package.json`)
+  modulePathIgnorePatterns: ['<rootDir>/.next/'],
+  watchPathIgnorePatterns: ['<rootDir>/.next/'],
   collectCoverageFrom: [
     'components/**/*.{js,jsx,ts,tsx}',
     'hooks/**/*.{js,jsx,ts,tsx}',

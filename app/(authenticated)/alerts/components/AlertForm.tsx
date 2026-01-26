@@ -8,6 +8,7 @@ import { useUsers } from "@/hooks/api/users";
 import { useWorkDocuments } from "@/hooks/api/workDocuments";
 import { useSuppliers } from "@/hooks/api/suppliers";
 import { normalizeId } from "@/lib/normalizeId";
+import { AlertType, AlertSeverity } from "@/lib/types/alert";
 
 interface AlertFormProps {
   initialData?: any;
@@ -19,22 +20,29 @@ interface AlertFormProps {
   defaultDocumentId?: string;
 }
 
-// Backend AlertType enum - must match backend enum exactly
-const ALERT_TYPE_OPTIONS = [
-  { value: "work", label: "Obra" },
-  { value: "supplier", label: "Proveedor" },
-  { value: "document", label: "Documento" },
-  { value: "accounting", label: "Contable" },
-  { value: "cashbox", label: "Caja" },
-  { value: "user", label: "Usuario" },
-  { value: "general", label: "General" },
+// Backend AlertType enum - debe coincidir EXACTAMENTE con el backend
+// pmd-backend/src/common/enums/alert-type.enum.ts
+const ALERT_TYPE_OPTIONS: Array<{ value: AlertType; label: string }> = [
+  { value: AlertType.EXPIRED_DOCUMENTATION, label: "Documentación vencida" },
+  { value: AlertType.CASHBOX_DIFFERENCE, label: "Diferencia de caja" },
+  { value: AlertType.CONTRACT_ZERO_BALANCE, label: "Contrato sin saldo" },
+  { value: AlertType.CONTRACT_INSUFFICIENT_BALANCE, label: "Contrato con saldo insuficiente" },
+  { value: AlertType.CONTRACTOR_BUDGET_LOW, label: "Presupuesto de contratista bajo" },
+  { value: AlertType.DUPLICATE_INVOICE, label: "Factura duplicada" },
+  { value: AlertType.OVERDUE_STAGE, label: "Etapa vencida" },
+  { value: AlertType.OBSERVED_EXPENSE, label: "Gasto observado" },
+  { value: AlertType.REJECTED_EXPENSE, label: "Gasto rechazado" },
+  { value: AlertType.ANNULLED_EXPENSE, label: "Gasto anulado" },
+  { value: AlertType.POST_CLOSURE_EXPENSE, label: "Gasto post cierre" },
+  { value: AlertType.MISSING_VALIDATION, label: "Validación pendiente" },
+  { value: AlertType.PENDING_INCOME_CONFIRMATION, label: "Confirmación de ingreso pendiente" },
 ];
 
 // Backend severity enum: "info" | "warning" | "critical" (optional)
-const SEVERITY_OPTIONS = [
-  { value: "info", label: "Info" },
-  { value: "warning", label: "Advertencia" },
-  { value: "critical", label: "Crítico" },
+const SEVERITY_OPTIONS: Array<{ value: AlertSeverity; label: string }> = [
+  { value: AlertSeverity.INFO, label: "Info" },
+  { value: AlertSeverity.WARNING, label: "Advertencia" },
+  { value: AlertSeverity.CRITICAL, label: "Crítico" },
 ];
 
 export function AlertForm({
@@ -53,8 +61,9 @@ export function AlertForm({
 
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const [type, setType] = useState("general");
-  const [severity, setSeverity] = useState<"info" | "warning" | "critical">("info");
+  // Default: usar un AlertType válido del backend
+  const [type, setType] = useState<AlertType>(AlertType.MISSING_VALIDATION);
+  const [severity, setSeverity] = useState<AlertSeverity>(AlertSeverity.INFO);
   const [workId, setWorkId] = useState(normalizeId(defaultWorkId));
   const [supplierId, setSupplierId] = useState("");
   const [userId, setUserId] = useState(normalizeId(defaultPersonId));
@@ -65,8 +74,12 @@ export function AlertForm({
     if (initialData) {
       setTitle(initialData.title || "");
       setMessage(initialData.message || initialData.description || "");
-      setType(initialData.type || initialData.category || "general");
-      setSeverity(initialData.severity || "info");
+      // Normalizar type/severity y fallback a defaults válidos
+      const nextType = (initialData.type || initialData.category) as AlertType | undefined;
+      setType(nextType && Object.values(AlertType).includes(nextType) ? nextType : AlertType.MISSING_VALIDATION);
+
+      const nextSeverity = initialData.severity as AlertSeverity | undefined;
+      setSeverity(nextSeverity && Object.values(AlertSeverity).includes(nextSeverity) ? nextSeverity : AlertSeverity.INFO);
       setWorkId(normalizeId(initialData.work_id || initialData.workId || defaultWorkId));
       setSupplierId(normalizeId(initialData.supplier_id || initialData.supplierId));
       setUserId(normalizeId(initialData.user_id || initialData.userId || defaultPersonId));
@@ -189,7 +202,7 @@ export function AlertForm({
         <SelectField
           label="Tipo"
           value={type}
-          onChange={(e) => setType(e.target.value)}
+          onChange={(e) => setType(e.target.value as AlertType)}
           options={ALERT_TYPE_OPTIONS}
           error={errors.type}
           required

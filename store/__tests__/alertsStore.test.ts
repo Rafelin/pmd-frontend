@@ -1,4 +1,4 @@
-﻿import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { useAlertsStore } from '../alertsStore'
 import { apiClient } from '@/lib/api'
 
@@ -78,7 +78,7 @@ describe('alertsStore', () => {
         await result.current.markAsRead('1')
       })
 
-      expect(apiClient.patch).toHaveBeenCalledWith('/alerts/1/read', {})
+      expect(apiClient.patch).toHaveBeenCalledWith('/alerts/1/mark-read', { is_read: true })
     })
   })
 

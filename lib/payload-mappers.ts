@@ -87,6 +87,8 @@ export function mapCreateSupplierPayload(form: Record<string, unknown>): {
   category?: string;
   status?: "provisional" | "approved" | "blocked" | "rejected";
   type?: "labor" | "materials" | "contractor" | "services" | "logistics" | "other";
+  weekly_payment?: number;
+  contractor_budget?: number;
   fiscal_condition?: "ri" | "monotributista" | "exempt" | "other";
   address?: string;
 } {
@@ -99,22 +101,55 @@ export function mapCreateSupplierPayload(form: Record<string, unknown>): {
     category?: string;
     status?: "provisional" | "approved" | "blocked" | "rejected";
     type?: "labor" | "materials" | "contractor" | "services" | "logistics" | "other";
+    weekly_payment?: number;
+    contractor_budget?: number;
     fiscal_condition?: "ri" | "monotributista" | "exempt" | "other";
     address?: string;
   } = {
     name: (typeof form.nombre === "string" ? form.nombre : typeof form.name === "string" ? form.name : "").trim(),
-    cuit: typeof form.cuit === "string" ? form.cuit.trim() : undefined,
-    email: typeof form.email === "string" ? form.email.trim() : undefined,
+    // ⚠️ Importante: en el backend @IsOptional NO ignora strings vacíos.
+    // Si enviamos "" en campos con validaciones extra (email/cuit), puede causar 400.
+    cuit: typeof form.cuit === "string" ? form.cuit.trim() || undefined : undefined,
+    email: typeof form.email === "string" ? form.email.trim() || undefined : undefined,
     phone: (typeof form.telefono === "string" ? form.telefono : typeof form.phone === "string" ? form.phone : undefined)?.trim() || undefined,
     contact: (typeof form.contacto === "string" ? form.contacto : typeof form.contactName === "string" ? form.contactName : typeof form.contact === "string" ? form.contact : undefined)?.trim() || undefined,
-    category: typeof form.category === "string" ? form.category.trim() : undefined,
-    status: (form.existstatus || form.status) as "provisional" | "approved" | "blocked" | "rejected" | undefined,
+    category: typeof form.category === "string" ? form.category.trim() || undefined : undefined,
+    status: (() => {
+      const raw =
+        typeof (form as any).existstatus === "string"
+          ? (form as any).existstatus
+          : typeof (form as any).status === "string"
+          ? (form as any).status
+          : undefined;
+      const normalized = typeof raw === "string" ? raw.trim() : "";
+      if (!normalized) return undefined;
+      if (normalized === "provisional" || normalized === "approved" || normalized === "blocked" || normalized === "rejected") {
+        return normalized;
+      }
+      return undefined;
+    })(),
     address: (typeof form.direccion === "string" ? form.direccion : typeof form.address === "string" ? form.address : undefined)?.trim() || undefined,
   };
 
   // Agregar type si está presente
   if (form.type && typeof form.type === "string" && form.type.trim() !== "") {
     payload.type = form.type.trim() as "labor" | "materials" | "contractor" | "services" | "logistics" | "other";
+  }
+
+  // Campos de contratista (solo si type === contractor)
+  if (payload.type === "contractor") {
+    const weeklyPaymentRaw = (form as any).weekly_payment ?? (form as any).weeklyPayment;
+    const contractorBudgetRaw = (form as any).contractor_budget ?? (form as any).contractorBudget;
+
+    if (weeklyPaymentRaw !== undefined && weeklyPaymentRaw !== null && String(weeklyPaymentRaw).trim() !== "") {
+      const n = Number(weeklyPaymentRaw);
+      if (!Number.isNaN(n) && n >= 0) payload.weekly_payment = n;
+    }
+
+    if (contractorBudgetRaw !== undefined && contractorBudgetRaw !== null && String(contractorBudgetRaw).trim() !== "") {
+      const n = Number(contractorBudgetRaw);
+      if (!Number.isNaN(n) && n >= 0) payload.contractor_budget = n;
+    }
   }
 
   // Agregar fiscal_condition si está presente

@@ -128,10 +128,6 @@ export async function fillField(page: Page, label: string | Locator, value: stri
         `div:has(label:has-text("${labelVar}")) input`,
         `div:has(label:has-text("${labelVar}")) select`,
         `div:has(label:has-text("${labelVar}")) textarea`,
-        // Buscar en FormField (estructura común)
-        `div:has-text("${labelVar}") input`,
-        `div:has-text("${labelVar}") select`,
-        `div:has-text("${labelVar}") textarea`,
       );
     }
     

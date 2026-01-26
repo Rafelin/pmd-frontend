@@ -179,7 +179,7 @@ export function IncomeForm({ initialData, onSubmit, onCancel, isLoading }: Incom
           type="number"
           step="0.01"
           min="0"
-          value={formData.amount || ""}
+          value={formData.amount ?? ""}
           onChange={(e) => {
             const value = parseFloat(e.target.value) || 0;
             setFormData({ ...formData, amount: value });

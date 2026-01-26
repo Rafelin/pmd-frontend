@@ -31,6 +31,8 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
     contactName: "",
     existstatus: "provisional", // Backend enum: ["provisional", "approved", "blocked", "rejected"]
     type: "",
+    weekly_payment: "",
+    contractor_budget: "",
     fiscal_condition: "",
     notes: "",
     notas: "",
@@ -55,6 +57,14 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
         contactName: initialData.contact || (initialData as any).contactName || (initialData as any).contacto || "",
         existstatus: (initialData as any).existstatus || (initialData as any).status || (initialData as any).estado || "provisional",
         type: initialData.type || "",
+        weekly_payment:
+          (initialData as any).weekly_payment !== undefined && (initialData as any).weekly_payment !== null
+            ? String((initialData as any).weekly_payment)
+            : "",
+        contractor_budget:
+          (initialData as any).contractor_budget !== undefined && (initialData as any).contractor_budget !== null
+            ? String((initialData as any).contractor_budget)
+            : "",
         fiscal_condition: initialData.fiscal_condition || "",
         notes: (initialData as any).notes || (initialData as any).notas || "",
         notas: (initialData as any).notas || (initialData as any).notes || "",
@@ -270,6 +280,32 @@ export function SupplierForm({ initialData, onSubmit, onCancel, isLoading }: Sup
           <option value={FiscalCondition.OTHER}>Otro</option>
         </Select>
       </FormField>
+
+      {/* Campos adicionales para Contratista */}
+      {formData.type === SupplierType.CONTRACTOR && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+          <FormField label="Pago semanal base (referencia)">
+            <Input
+              type="number"
+              inputMode="decimal"
+              min={0}
+              value={formData.weekly_payment}
+              onChange={(e) => setFormData({ ...formData, weekly_payment: e.target.value })}
+              placeholder="Ej: 50000"
+            />
+          </FormField>
+          <FormField label="Presupuesto total (certificaciones)">
+            <Input
+              type="number"
+              inputMode="decimal"
+              min={0}
+              value={formData.contractor_budget}
+              onChange={(e) => setFormData({ ...formData, contractor_budget: e.target.value })}
+              placeholder="Ej: 1000000"
+            />
+          </FormField>
+        </div>
+      )}
 
       {/* Notas */}
       <FormField label="Notas">

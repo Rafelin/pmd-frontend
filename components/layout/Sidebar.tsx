@@ -17,6 +17,7 @@ import {
   Calculator,
   Wallet,
   FileText,
+  ScrollText,
   Bell,
   Shield,
   Settings,
@@ -65,6 +66,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { label: "Control de Asistencia", href: "/attendance", icon: CalendarCheck, permission: "attendance.read", section: "RRHH" },
   { label: "Adelantos", href: "/employee-advances", icon: HandCoins, permission: "employee_advances.read", section: "RRHH" },
   { label: "Nómina", href: "/payroll", icon: Banknote, permission: "payroll.read", section: "RRHH" },
+  { label: "Recibos", href: "/receipts", icon: ScrollText, permission: "payroll.read", section: "RRHH" },
   
   // Administración
   { label: "Contabilidad", href: "/accounting", icon: Calculator, permission: "accounting.read", section: "Administración" },

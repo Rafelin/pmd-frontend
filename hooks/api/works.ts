@@ -12,7 +12,7 @@ export function useWorks() {
   };
   
   const { data, error, isLoading, mutate } = useSWR<Work[]>(
-    token ? "works" : null,
+    token ? "/works" : null,
     fetcher
   );
 
@@ -40,7 +40,7 @@ export function useWork(id: string | null) {
   };
   
   const { data, error, isLoading, mutate } = useSWR<Work>(
-    token && id ? `works/${id}` : null,
+    token && id ? `/works/${id}` : null,
     fetcher
   );
 

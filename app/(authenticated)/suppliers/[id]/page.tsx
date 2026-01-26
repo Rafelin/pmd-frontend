@@ -15,6 +15,10 @@ import { useToast } from "@/components/ui/Toast";
 import { AlertCircle, Unlock, FileText, CheckCircle, XCircle } from "lucide-react";
 import { SupplierType, FiscalCondition } from "@/lib/types/supplier";
 import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
+import { useContractorCertifications } from "@/hooks/api/contractorCertifications";
+import { useContracts } from "@/hooks/api/contracts";
+import { ContractorProgress } from "@/components/contractors/ContractorProgress";
+import { ContractorCertificationList } from "@/components/contractors/ContractorCertificationList";
 
 function SupplierDetailContent() {
   const params = useParams();
@@ -33,6 +37,12 @@ function SupplierDetailContent() {
       : "";
 
   const { supplier, isLoading, error, mutate } = useSupplier(id);
+  const isContractor = supplier?.type === SupplierType.CONTRACTOR || (supplier as any)?.type === "contractor";
+  const { certifications, mutate: mutateCerts } = useContractorCertifications({
+    supplier_id: id || "",
+    enabled: Boolean(isContractor && id),
+  });
+  const { contracts } = useContracts();
   
   // Verificar permisos
   const isDirection = user?.role?.name === "DIRECTION";
@@ -345,6 +355,23 @@ function SupplierDetailContent() {
               {renderField("Fecha de creación", supplier.createdAt, formatDate)}
               {renderField("Última actualización", supplier.updatedAt, formatDate)}
             </div>
+
+            {/* Sección de contratista */}
+            {isContractor && (
+              <div className="pt-4 border-t border-gray-200 space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">Contratista</h3>
+                <ContractorProgress supplier={supplier as any} />
+                <ContractorCertificationList
+                  supplierId={supplier.id}
+                  certifications={certifications || []}
+                  contracts={contracts || []}
+                  onRefresh={async () => {
+                    await mutate();
+                    await mutateCerts();
+                  }}
+                />
+              </div>
+            )}
 
             {/* Información de ART */}
             {artDocument && (

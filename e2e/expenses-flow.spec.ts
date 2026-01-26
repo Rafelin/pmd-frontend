@@ -78,50 +78,13 @@ test.describe('Flujo de Gastos', () => {
     await page.waitForTimeout(2000); // Dar tiempo adicional para que el formulario se renderice
     
     // Llenar formulario (ajustar campos según tu implementación)
-    // Nota: Estos selectores son genéricos, ajustar según tu UI real
-    // "Obra" puede ser un select o combobox, intentar ambos
-    try {
-      await selectOption(page, 'Obra', 'Test');
-    } catch (error1) {
-      // Si selectOption falla, intentar combobox
-      try {
-        await selectComboboxOption(page, 'Obra', 'Test');
-      } catch (error2) {
-        // Si tampoco es combobox, usar fillField (puede ser input con autocomplete)
-        try {
-          await fillField(page, 'Obra', 'Test');
-          await page.waitForTimeout(1000); // Esperar a que aparezca el dropdown
-          // Buscar la opción en el dropdown
-          const option = page.locator(`text="${'Test'}"`).first();
-          const isOptionVisible = await option.isVisible({ timeout: 3000 }).catch(() => false);
-          if (isOptionVisible) {
-            await option.click();
-          } else {
-            // Si no aparece, presionar Enter
-            await page.keyboard.press('Enter');
-          }
-          await page.waitForTimeout(500);
-        } catch (error3) {
-          console.warn('No se pudo seleccionar obra:', error3);
-          // Continuar de todas formas, puede que el campo no sea requerido o tenga un valor por defecto
-        }
-      }
-    }
-    
+    // Campos requeridos (ExpenseForm)
+    await selectOption(page, 'Obra', 'Test');      // Seed: "Test Work"
+    await selectOption(page, 'Rubro', 'Nómina');   // Rubric existente en fixtures
+    await selectOption(page, 'Proveedor', 'Test'); // Seed: "Test Supplier"
+
     await fillField(page, 'Monto', '1000');
-    await fillField(page, 'Fecha', new Date().toISOString().split('T')[0]);
-    
-    // Seleccionar tipo de documento
-    const documentType = page.locator('select[name*="document"], select[name*="tipo"]').first();
-    if (await documentType.isVisible()) {
-      await documentType.selectOption({ index: 1 });
-    }
-    
-    // Seleccionar categoría
-    const category = page.locator('select[name*="categor"], select[name*="category"]').first();
-    if (await category.isVisible()) {
-      await category.selectOption({ index: 1 });
-    }
+    await fillField(page, 'Fecha de Compra', new Date().toISOString().split('T')[0]);
     
     // Enviar formulario
     await submitForm(page, 'Guardar');

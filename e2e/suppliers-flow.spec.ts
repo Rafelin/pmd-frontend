@@ -35,8 +35,9 @@ test.describe('Flujo de Proveedores', () => {
     await waitForLoadingComplete(page);
     
     // Llenar formulario
-    await fillField(page, 'Nombre', `Proveedor Test ${Date.now()}`);
-    await fillField(page, 'CUIT', '20-12345678-9');
+    await fillField(page, 'Nombre o Razón Social', `Proveedor Test ${Date.now()}`);
+    // CUIT con dígito verificador válido (evita 400 por checksum del backend)
+    await fillField(page, 'CUIT', '20-12345678-6');
     
     // Guardar
     await submitForm(page, 'Guardar');

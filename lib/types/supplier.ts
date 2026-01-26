@@ -40,6 +40,11 @@ export interface Supplier {
   status?: SupplierStatus | string;
   estado?: string; // Alias para status
   type?: SupplierType | string;
+  // Contractor-only fields (when type === contractor)
+  weekly_payment?: number | null;
+  contractor_budget?: number | null;
+  contractor_total_paid?: number | null;
+  contractor_remaining_balance?: number | null;
   fiscal_condition?: FiscalCondition | string;
   address?: string;
   created_by_id?: string;
@@ -65,6 +70,8 @@ export interface CreateSupplierData {
   category?: string;
   status?: SupplierStatus;
   type?: SupplierType;
+  weekly_payment?: number;
+  contractor_budget?: number;
   fiscal_condition?: FiscalCondition;
   address?: string;
   created_by_id?: string;
@@ -79,6 +86,8 @@ export interface UpdateSupplierData {
   category?: string;
   status?: SupplierStatus;
   type?: SupplierType;
+  weekly_payment?: number | null;
+  contractor_budget?: number | null;
   fiscal_condition?: FiscalCondition;
   address?: string;
 }
