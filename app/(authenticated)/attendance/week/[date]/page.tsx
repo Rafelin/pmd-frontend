@@ -82,27 +82,39 @@ function WeeklyAttendanceContent() {
   // Después, solo se recargan manualmente
   const shouldAutoLoad = initialFilters === null;
   
+  // Usar los filtros iniciales si ya se cargaron, o los actuales si es la primera vez
+  const employeeFilters = initialFilters !== null 
+    ? {
+        filterByOrganization: initialFilters.filterByOrganization,
+        isActive: true,
+        work_id: initialFilters.work_id || undefined,
+      }
+    : {
+        filterByOrganization, 
+        isActive: true,
+        work_id: selectedWorkId || undefined,
+      };
+  
   const {
     employees,
     isLoading: isLoadingEmployees,
     error: employeesError,
     mutate: mutateEmployees,
   } = useEmployees(
-    { 
-      filterByOrganization, 
-      isActive: true,
-      work_id: selectedWorkId || undefined,
-    },
+    employeeFilters,
     { manual: !shouldAutoLoad } // Solo cargar automáticamente la primera vez
   );
 
-  // Guardar los filtros iniciales después de la primera carga
+  // Guardar los filtros iniciales después de que termine la primera carga
+  // Esto marca que ya se hizo la carga inicial y evita recargas automáticas
   useEffect(() => {
-    if (shouldAutoLoad && employees && employees.length >= 0 && initialFilters === null) {
+    if (shouldAutoLoad && !isLoadingEmployees && initialFilters === null) {
+      // Esperar a que termine la carga (éxito o error) antes de guardar los filtros
+      // Esto asegura que la primera carga se complete antes de desactivar el modo automático
       setInitialFilters(currentFilters);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldAutoLoad, employees, initialFilters]);
+  }, [shouldAutoLoad, isLoadingEmployees, initialFilters]);
 
   // Función para recargar empleados manualmente
   const handleReloadEmployees = () => {
@@ -244,7 +256,7 @@ function WeeklyAttendanceContent() {
             </div>
 
             {/* Botón para recargar empleados manualmente (solo después de la primera carga) */}
-            {initialFilters !== null && (
+            {/* {initialFilters !== null && (
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -256,7 +268,7 @@ function WeeklyAttendanceContent() {
                   {isLoadingEmployees ? "Cargando..." : "Recargar Empleados"}
                 </Button>
               </div>
-            )}
+            )} */}
 
             {/* <div className="flex items-center gap-2 ml-auto">
               <input
@@ -280,6 +292,20 @@ function WeeklyAttendanceContent() {
       {/* Planilla */}
       <Card>
         <CardContent className="p-4">
+          {employeesError && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              <p className="font-semibold mb-2">Error al cargar empleados</p>
+              <p className="text-sm">{employeesError.message || "Error desconocido"}</p>
+              <Button
+                variant="outline"
+                onClick={() => mutateEmployees()}
+                className="mt-3"
+                size="sm"
+              >
+                Reintentar
+              </Button>
+            </div>
+          )}
           <div className="mb-4 text-sm text-gray-600">
             <p>
               <strong>Instrucciones:</strong> Haz clic en cada celda para cambiar
