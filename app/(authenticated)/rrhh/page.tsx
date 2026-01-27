@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useEmployees, employeeApi } from "@/hooks/api/employees";
@@ -32,11 +32,19 @@ function RRHHContent() {
   const [trade, setTrade] = useState<string>("");
 
   const { works } = useWorks();
-  const { employees, isLoading, error, mutate } = useEmployees({
-    filterByOrganization,
-    work_id: workId || undefined,
-    trade: trade || undefined,
-  });
+  
+  // Memoizar los filtros para evitar recrear el objeto en cada render
+  const employeeFilters = useMemo(
+    () => ({
+      filterByOrganization,
+      work_id: workId || undefined,
+      trade: trade || undefined,
+      isActive: true,
+    }),
+    [filterByOrganization, workId, trade]
+  );
+
+  const { employees, isLoading, error, mutate } = useEmployees(employeeFilters);
 
   useEffect(() => {
     const q = searchParams.get("work_id");

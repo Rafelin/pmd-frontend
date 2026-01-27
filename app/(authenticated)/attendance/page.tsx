@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAttendance } from "@/hooks/api/attendance";
 import { useEmployees } from "@/hooks/api/employees";
@@ -38,6 +38,10 @@ function AttendanceContent() {
   );
   const [filterByOrganization, setFilterByOrganization] = useState(false);
   const [selectedWorkId, setSelectedWorkId] = useState<string>("");
+  const [initialFilters, setInitialFilters] = useState<{
+    filterByOrganization: boolean;
+    work_id: string;
+  } | null>(null);
 
   const weekStartDate = useMemo(() => {
     return selectedDate ? new Date(selectedDate) : getWeekStart(new Date());
@@ -51,11 +55,40 @@ function AttendanceContent() {
     work_id: selectedWorkId || undefined,
   });
 
-  const { employees, isLoading: isLoadingEmployees, error: employeesError } = useEmployees({
-    filterByOrganization,
-    isActive: true,
-    work_id: selectedWorkId || undefined,
-  });
+  // Memoizar los filtros actuales para comparar con los iniciales
+  const currentFilters = useMemo(
+    () => ({
+      filterByOrganization,
+      work_id: selectedWorkId || "",
+    }),
+    [filterByOrganization, selectedWorkId]
+  );
+
+  // Cargar empleados automáticamente solo la primera vez
+  // Después, solo se recargan manualmente
+  const shouldAutoLoad = initialFilters === null;
+  
+  const { employees, isLoading: isLoadingEmployees, error: employeesError, mutate: mutateEmployees } = useEmployees(
+    {
+      filterByOrganization,
+      isActive: true,
+      work_id: selectedWorkId || undefined,
+    },
+    { manual: !shouldAutoLoad } // Solo cargar automáticamente la primera vez
+  );
+
+  // Guardar los filtros iniciales después de la primera carga
+  useEffect(() => {
+    if (shouldAutoLoad && employees && employees.length >= 0 && initialFilters === null) {
+      setInitialFilters(currentFilters);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldAutoLoad, employees, initialFilters]);
+
+  // Función para recargar empleados manualmente
+  const handleReloadEmployees = () => {
+    mutateEmployees();
+  };
 
   const isLoading = isLoadingAttendance || isLoadingEmployees;
   const error = attendanceError || employeesError;
@@ -64,16 +97,19 @@ function AttendanceContent() {
     const newDate = new Date(weekStartDate);
     newDate.setDate(newDate.getDate() - 7);
     setSelectedDate(formatDate(newDate));
+    // NO recargar empleados automáticamente
   };
 
   const handleNextWeek = () => {
     const newDate = new Date(weekStartDate);
     newDate.setDate(newDate.getDate() + 7);
     setSelectedDate(formatDate(newDate));
+    // NO recargar empleados automáticamente
   };
 
   const handleToday = () => {
     setSelectedDate(formatDate(getWeekStart(new Date())));
+    // NO recargar empleados automáticamente
   };
 
   if (isLoading) {
@@ -190,6 +226,21 @@ function AttendanceContent() {
                 Semana siguiente →
               </Button>
             </div>
+
+            {/* Botón para recargar empleados manualmente (solo después de la primera carga) */}
+            {initialFilters !== null && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleReloadEmployees}
+                  size="sm"
+                  className="ml-auto"
+                  disabled={isLoadingEmployees}
+                >
+                  {isLoadingEmployees ? "Cargando..." : "Recargar Empleados"}
+                </Button>
+              </div>
+            )}
 
             {/* Filtro por organización */}
             {/* <div className="flex items-center gap-2 ml-auto">

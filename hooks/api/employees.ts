@@ -3,12 +3,17 @@ import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { Employee, CreateEmployeeData, UpdateEmployeeData } from "@/lib/types/employee";
 
-export function useEmployees(filters?: {
-  filterByOrganization?: boolean;
-  work_id?: string;
-  trade?: string;
-  isActive?: boolean;
-}) {
+export function useEmployees(
+  filters?: {
+    filterByOrganization?: boolean;
+    work_id?: string;
+    trade?: string;
+    isActive?: boolean;
+  },
+  options?: {
+    manual?: boolean; // Si es true, no hace fetch automático
+  }
+) {
   const { token } = useAuthStore();
   
   const fetcher = () => {
@@ -30,9 +35,43 @@ export function useEmployees(filters?: {
     return apiClient.get(url);
   };
   
+  // Crear una clave estable usando valores primitivos en lugar del objeto filters
+  // Esto evita que SWR trate cada render como una nueva solicitud
+  // Si manual es true, no pasar la clave para que no haga fetch automático
+  const swrKey = options?.manual 
+    ? null 
+    : token 
+      ? [
+          "employees",
+          filters?.filterByOrganization ?? false,
+          filters?.work_id ?? null,
+          filters?.trade ?? null,
+          filters?.isActive ?? undefined,
+        ]
+      : null;
+  
   const { data, error, isLoading, mutate } = useSWR(
-    token ? ["employees", filters] : null,
-    fetcher
+    swrKey,
+    fetcher,
+    {
+      // Configuración para reducir solicitudes innecesarias
+      dedupingInterval: 5000, // 5 segundos de deduplicación
+      revalidateOnFocus: false, // No revalidar al enfocar la ventana
+      revalidateIfStale: false, // No revalidar si los datos están "stale"
+      shouldRetryOnError: (error: any) => {
+        // No reintentar en errores 429 (Too Many Requests)
+        if (error?.response?.status === 429 || error?.status === 429) {
+          return false;
+        }
+        // No reintentar en errores de autenticación/autorización
+        if (error?.response?.status === 401 || error?.response?.status === 403) {
+          return false;
+        }
+        return true;
+      },
+      errorRetryCount: 2, // Máximo 2 reintentos
+      errorRetryInterval: 5000, // 5 segundos entre reintentos
+    }
   );
 
   return {
