@@ -46,11 +46,33 @@ function getAttendanceForDate(
   employeeId: string,
   date: string
 ): Attendance | null {
-  return (
-    attendance.find(
-      (a) => a.employee_id === employeeId && a.date === date
-    ) || null
-  );
+  const result = attendance.find((a) => {
+    // Normalize date comparison - handle ISO date strings (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.sssZ)
+    // The date field is typed as string, so we only need to handle string formats
+    const attendanceDate = typeof a.date === 'string' 
+      ? a.date.split('T')[0]  // Extract YYYY-MM-DD from ISO string if needed
+      : String(a.date || '').split('T')[0];
+    
+    // Normalize employee_id comparison (handle both string and potential UUID formats)
+    const attendanceEmployeeId = String(a.employee_id || '');
+    const searchEmployeeId = String(employeeId || '');
+    
+    const matches = attendanceEmployeeId === searchEmployeeId && attendanceDate === date;
+    
+    // Debug log for mismatches (only in development)
+    if (process.env.NODE_ENV === 'development' && attendanceEmployeeId === searchEmployeeId && attendanceDate !== date) {
+      console.log('[getAttendanceForDate] Date mismatch:', {
+        attendanceDate,
+        searchDate: date,
+        employeeId: attendanceEmployeeId,
+        rawDate: a.date,
+      });
+    }
+    
+    return matches;
+  });
+  
+  return result || null;
 }
 
 export function AttendanceSheet({
@@ -70,6 +92,26 @@ export function AttendanceSheet({
 
   const weekDates = getWeekDates(weekStartDate);
   const weekStartDateStr = formatDate(weekStartDate);
+
+  // Debug logs (only in development)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[AttendanceSheet] Employees:', employees?.length || 0);
+    console.log('[AttendanceSheet] Attendance records:', attendance?.length || 0);
+    console.log('[AttendanceSheet] Week start date:', weekStartDateStr);
+    if (attendance && attendance.length > 0) {
+      console.log('[AttendanceSheet] Sample attendance:', {
+        employee_id: attendance[0]?.employee_id,
+        date: attendance[0]?.date,
+        status: attendance[0]?.status,
+      });
+    }
+    if (employees && employees.length > 0) {
+      console.log('[AttendanceSheet] Sample employee:', {
+        id: employees[0]?.id,
+        fullName: employees[0]?.fullName,
+      });
+    }
+  }
 
   const handleStatusChange = async (
     employeeId: string,
