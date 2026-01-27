@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AttendanceCell } from "./AttendanceCell";
 import { LateHoursModal } from "./LateHoursModal";
 import { Attendance, AttendanceStatus } from "@/lib/types/attendance";
@@ -59,8 +59,8 @@ function getAttendanceForDate(
     
     const matches = attendanceEmployeeId === searchEmployeeId && attendanceDate === date;
     
-    // Debug log for mismatches (only in development)
-    if (process.env.NODE_ENV === 'development' && attendanceEmployeeId === searchEmployeeId && attendanceDate !== date) {
+    // Debug log for mismatches (only in development and client-side)
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined' && attendanceEmployeeId === searchEmployeeId && attendanceDate !== date) {
       console.log('[getAttendanceForDate] Date mismatch:', {
         attendanceDate,
         searchDate: date,
@@ -93,25 +93,27 @@ export function AttendanceSheet({
   const weekDates = getWeekDates(weekStartDate);
   const weekStartDateStr = formatDate(weekStartDate);
 
-  // Debug logs (only in development)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[AttendanceSheet] Employees:', employees?.length || 0);
-    console.log('[AttendanceSheet] Attendance records:', attendance?.length || 0);
-    console.log('[AttendanceSheet] Week start date:', weekStartDateStr);
-    if (attendance && attendance.length > 0) {
-      console.log('[AttendanceSheet] Sample attendance:', {
-        employee_id: attendance[0]?.employee_id,
-        date: attendance[0]?.date,
-        status: attendance[0]?.status,
-      });
+  // Debug logs (only in development and client-side)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      console.log('[AttendanceSheet] Employees:', employees?.length || 0);
+      console.log('[AttendanceSheet] Attendance records:', attendance?.length || 0);
+      console.log('[AttendanceSheet] Week start date:', weekStartDateStr);
+      if (attendance && attendance.length > 0) {
+        console.log('[AttendanceSheet] Sample attendance:', {
+          employee_id: attendance[0]?.employee_id,
+          date: attendance[0]?.date,
+          status: attendance[0]?.status,
+        });
+      }
+      if (employees && employees.length > 0) {
+        console.log('[AttendanceSheet] Sample employee:', {
+          id: employees[0]?.id,
+          fullName: employees[0]?.fullName,
+        });
+      }
     }
-    if (employees && employees.length > 0) {
-      console.log('[AttendanceSheet] Sample employee:', {
-        id: employees[0]?.id,
-        fullName: employees[0]?.fullName,
-      });
-    }
-  }
+  }, [employees, attendance, weekStartDateStr]);
 
   const handleStatusChange = async (
     employeeId: string,

@@ -38,10 +38,6 @@ function AttendanceContent() {
   );
   const [filterByOrganization, setFilterByOrganization] = useState(false);
   const [selectedWorkId, setSelectedWorkId] = useState<string>("");
-  const [initialFilters, setInitialFilters] = useState<{
-    filterByOrganization: boolean;
-    work_id: string;
-  } | null>(null);
 
   const weekStartDate = useMemo(() => {
     return selectedDate ? new Date(selectedDate) : getWeekStart(new Date());
@@ -55,52 +51,41 @@ function AttendanceContent() {
     work_id: selectedWorkId || undefined,
   });
 
-  // Memoizar los filtros actuales para comparar con los iniciales
-  const currentFilters = useMemo(
+
+  // Filtros para empleados - siempre usar los filtros actuales
+  const employeeFilters = useMemo(
     () => ({
       filterByOrganization,
-      work_id: selectedWorkId || "",
+      isActive: true,
+      work_id: selectedWorkId || undefined,
     }),
     [filterByOrganization, selectedWorkId]
   );
-
-  // Cargar empleados automáticamente solo la primera vez
-  // Después, solo se recargan manualmente
-  const shouldAutoLoad = initialFilters === null;
   
-  // Usar los filtros iniciales si ya se cargaron, o los actuales si es la primera vez
-  const employeeFilters = initialFilters !== null 
-    ? {
-        filterByOrganization: initialFilters.filterByOrganization,
-        isActive: true,
-        work_id: initialFilters.work_id || undefined,
-      }
-    : {
-        filterByOrganization,
-        isActive: true,
-        work_id: selectedWorkId || undefined,
-      };
-  
+  // Cargar empleados siempre con los filtros actuales
+  // SWR recargará automáticamente cuando cambien los filtros (work_id, etc.)
   const { employees, isLoading: isLoadingEmployees, error: employeesError, mutate: mutateEmployees } = useEmployees(
-    employeeFilters,
-    { manual: !shouldAutoLoad } // Solo cargar automáticamente la primera vez
+    employeeFilters
   );
 
-  // Guardar los filtros iniciales después de que termine la primera carga
-  // Esto marca que ya se hizo la carga inicial y evita recargas automáticas
+  // Debug: Log de empleados cargados (solo en desarrollo)
   useEffect(() => {
-    if (shouldAutoLoad && !isLoadingEmployees && initialFilters === null) {
-      // Esperar a que termine la carga (éxito o error) antes de guardar los filtros
-      // Esto asegura que la primera carga se complete antes de desactivar el modo automático
-      setInitialFilters(currentFilters);
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      console.log('[AttendancePage] Employee filters:', employeeFilters);
+      console.log('[AttendancePage] Employees loaded:', employees?.length || 0);
+      if (employees && employees.length > 0) {
+        console.log('[AttendancePage] Sample employee:', {
+          id: employees[0]?.id,
+          fullName: employees[0]?.fullName,
+          isActive: employees[0]?.isActive,
+          work_id: employees[0]?.work_id,
+        });
+      }
+      if (employeesError) {
+        console.error('[AttendancePage] Error loading employees:', employeesError);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldAutoLoad, isLoadingEmployees, initialFilters]);
-
-  // Función para recargar empleados manualmente
-  const handleReloadEmployees = () => {
-    mutateEmployees();
-  };
+  }, [employees, employeesError, employeeFilters]);
 
   const isLoading = isLoadingAttendance || isLoadingEmployees;
   const error = attendanceError || employeesError;
@@ -109,19 +94,16 @@ function AttendanceContent() {
     const newDate = new Date(weekStartDate);
     newDate.setDate(newDate.getDate() - 7);
     setSelectedDate(formatDate(newDate));
-    // NO recargar empleados automáticamente
   };
 
   const handleNextWeek = () => {
     const newDate = new Date(weekStartDate);
     newDate.setDate(newDate.getDate() + 7);
     setSelectedDate(formatDate(newDate));
-    // NO recargar empleados automáticamente
   };
 
   const handleToday = () => {
     setSelectedDate(formatDate(getWeekStart(new Date())));
-    // NO recargar empleados automáticamente
   };
 
   if (isLoading) {
@@ -239,20 +221,6 @@ function AttendanceContent() {
               </Button>
             </div>
 
-            {/* Botón para recargar empleados manualmente (solo después de la primera carga) */}
-            {/* {initialFilters !== null && (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleReloadEmployees}
-                  size="sm"
-                  className="ml-auto"
-                  disabled={isLoadingEmployees}
-                >
-                  {isLoadingEmployees ? "Cargando..." : "Recargar Empleados"}
-                </Button>
-              </div>
-            )} */}
 
             {/* Filtro por organización */}
             {/* <div className="flex items-center gap-2 ml-auto">
