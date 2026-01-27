@@ -5,10 +5,12 @@ import { useRouter, useParams } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAttendanceWeek } from "@/hooks/api/attendance";
 import { useEmployees } from "@/hooks/api/employees";
+import { useWorks } from "@/hooks/api/works";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { AttendanceSheet } from "@/components/attendance/AttendanceSheet";
 import { Card, CardContent } from "@/components/ui/Card";
 
@@ -35,6 +37,7 @@ function WeeklyAttendanceContent() {
   const router = useRouter();
   const params = useParams();
   const [filterByOrganization, setFilterByOrganization] = useState(false);
+  const [selectedWorkId, setSelectedWorkId] = useState<string>("");
 
   // Get date from URL params
   const date = typeof params?.date === "string" ? params.date : null;
@@ -54,13 +57,22 @@ function WeeklyAttendanceContent() {
 
   const weekStartDateStr = formatDate(weekStartDate);
 
+  const { works } = useWorks();
+
   const { attendance, isLoading: isLoadingAttendance, error: attendanceError, mutate } =
-    useAttendanceWeek(weekStartDateStr, { filterByOrganization });
+    useAttendanceWeek(weekStartDateStr, { 
+      filterByOrganization,
+      work_id: selectedWorkId || undefined,
+    });
   const {
     employees,
     isLoading: isLoadingEmployees,
     error: employeesError,
-  } = useEmployees({ filterByOrganization, isActive: true });
+  } = useEmployees({ 
+    filterByOrganization, 
+    isActive: true,
+    work_id: selectedWorkId || undefined,
+  });
 
   const isLoading = isLoadingAttendance || isLoadingEmployees;
   const error = attendanceError || employeesError;
@@ -165,6 +177,25 @@ function WeeklyAttendanceContent() {
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-4">
+            {/* Filtro por obra */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">
+                Obra:
+              </label>
+              <Select
+                value={selectedWorkId}
+                onChange={(e) => setSelectedWorkId(e.target.value)}
+                className="w-auto min-w-[200px]"
+              >
+                <option value="">Todas las obras</option>
+                {works?.map((work) => (
+                  <option key={work.id} value={work.id}>
+                    {work.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
             <div className="flex gap-2">
               <Button variant="outline" onClick={handlePreviousWeek} size="sm">
                 ← Semana anterior

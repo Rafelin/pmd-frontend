@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -21,11 +21,20 @@ export default function PayrollPaymentHistoryPage() {
     isActive: true,
   });
 
+  // Memoizar el objeto filters para evitar recrearlo en cada render
+  const filters = useMemo(
+    () => ({ filterByOrganization }),
+    [filterByOrganization]
+  );
+
+  // Normalizar employeeId: convertir cadena vacía a null
+  const normalizedEmployeeId = employeeId && employeeId.trim() !== "" ? employeeId : null;
+
   const {
     payments,
     isLoading: isLoadingPayments,
     error: paymentsError,
-  } = usePayrollEmployee(employeeId || null, { filterByOrganization });
+  } = usePayrollEmployee(normalizedEmployeeId, filters);
 
   const isLoading = isLoadingEmployees || isLoadingPayments;
   const error = employeesError || paymentsError;

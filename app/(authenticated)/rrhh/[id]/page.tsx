@@ -6,7 +6,10 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { BotonVolver } from "@/components/ui/BotonVolver";
+import { Button } from "@/components/ui/Button";
 import { EmployeeTrade } from "@/lib/types/employee";
+import { HandCoins } from "lucide-react";
+import Link from "next/link";
 
 function EmployeeDetailContent({ id }: { id: string }) {
   const { employee, isLoading, error } = useEmployee(id);
@@ -128,6 +131,20 @@ function EmployeeDetailContent({ id }: { id: string }) {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Acciones rápidas */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h3 className="text-sm font-medium text-gray-500 mb-3">Acciones rápidas</h3>
+            <Link href={`/employee-advances?employee_id=${id}`}>
+              <Button
+                variant="secondary"
+                className="flex items-center gap-2"
+              >
+                <HandCoins className="h-4 w-4" />
+                Ver Adelantos
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

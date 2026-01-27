@@ -4,10 +4,12 @@ import { useState, useMemo } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAttendance } from "@/hooks/api/attendance";
 import { useEmployees } from "@/hooks/api/employees";
+import { useWorks } from "@/hooks/api/works";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { Card, CardContent } from "@/components/ui/Card";
 import { AttendanceSheet } from "@/components/attendance/AttendanceSheet";
 
@@ -35,19 +37,24 @@ function AttendanceContent() {
     formatDate(getWeekStart(new Date()))
   );
   const [filterByOrganization, setFilterByOrganization] = useState(false);
+  const [selectedWorkId, setSelectedWorkId] = useState<string>("");
 
   const weekStartDate = useMemo(() => {
     return selectedDate ? new Date(selectedDate) : getWeekStart(new Date());
   }, [selectedDate]);
 
+  const { works } = useWorks();
+
   const { attendance, isLoading: isLoadingAttendance, error: attendanceError, mutate } = useAttendance({
     filterByOrganization,
     week_start_date: formatDate(weekStartDate),
+    work_id: selectedWorkId || undefined,
   });
 
   const { employees, isLoading: isLoadingEmployees, error: employeesError } = useEmployees({
     filterByOrganization,
     isActive: true,
+    work_id: selectedWorkId || undefined,
   });
 
   const isLoading = isLoadingAttendance || isLoadingEmployees;
@@ -150,6 +157,25 @@ function AttendanceContent() {
                 }}
                 className="w-auto"
               />
+            </div>
+
+            {/* Filtro por obra */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">
+                Obra:
+              </label>
+              <Select
+                value={selectedWorkId}
+                onChange={(e) => setSelectedWorkId(e.target.value)}
+                className="w-auto min-w-[200px]"
+              >
+                <option value="">Todas las obras</option>
+                {works?.map((work) => (
+                  <option key={work.id} value={work.id}>
+                    {work.name}
+                  </option>
+                ))}
+              </Select>
             </div>
 
             {/* Navegación */}

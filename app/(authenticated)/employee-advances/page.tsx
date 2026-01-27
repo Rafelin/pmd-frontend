@@ -1,30 +1,80 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/Input";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Plus, X } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { parseBackendError } from "@/lib/parse-backend-error";
 import { useCan } from "@/lib/acl";
 import { AdvanceForm } from "@/components/advances/AdvanceForm";
 import { AdvanceList } from "@/components/advances/AdvanceList";
 import { useEmployeeAdvances, employeeAdvancesApi } from "@/hooks/api/employeeAdvances";
+import { useEmployees } from "@/hooks/api/employees";
 import type { CreateEmployeeAdvanceData, UpdateEmployeeAdvanceData } from "@/lib/types/employee-advance";
 
+/**
+ * Get Monday of the week for a given date
+ */
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
+/**
+ * Format date as YYYY-MM-DD
+ */
+function formatDate(date: Date): string {
+  return date.toISOString().split("T")[0];
+}
+
 function EmployeeAdvancesContent() {
+  const searchParams = useSearchParams();
+  const employeeIdFromUrl = searchParams?.get("employee_id");
+  
   const [filterByOrganization, setFilterByOrganization] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
+  const [selectedWeekStartDate, setSelectedWeekStartDate] = useState<string>("");
+
+  // Establecer el filtro de empleado desde la URL cuando se carga la página
+  useEffect(() => {
+    if (employeeIdFromUrl) {
+      setSelectedEmployeeId(employeeIdFromUrl);
+    }
+  }, [employeeIdFromUrl]);
+
   const { advances, isLoading, error, mutate } = useEmployeeAdvances({
     filterByOrganization,
+    employee_id: selectedEmployeeId || undefined,
+    week_start_date: selectedWeekStartDate || undefined,
+  });
+
+  const { employees, isLoading: isLoadingEmployees } = useEmployees({
+    filterByOrganization,
+    isActive: true,
   });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
 
   const canCreate = useCan("employee_advances.create");
+
+  const handleClearFilters = () => {
+    setSelectedEmployeeId("");
+    setSelectedWeekStartDate("");
+  };
+
+  const hasActiveFilters = selectedEmployeeId || selectedWeekStartDate;
 
   const handleCreate = async (data: CreateEmployeeAdvanceData | UpdateEmployeeAdvanceData) => {
     setIsSubmitting(true);
@@ -72,19 +122,69 @@ function EmployeeAdvancesContent() {
         </div>
       </div>
 
-      {/* <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <input
-          type="checkbox"
-          id="filterByOrganization"
-          checked={filterByOrganization}
-          onChange={(e) => setFilterByOrganization(e.target.checked)}
-          className="w-4 h-4 text-pmd-darkBlue border-gray-300 rounded focus:ring-pmd-darkBlue"
-        />
-        <label htmlFor="filterByOrganization" className="text-sm font-medium text-gray-700 cursor-pointer">
-          Filtrar por mi organización
-        </label>
-        <span className="text-xs text-gray-500">(Por defecto se muestran todos los adelantos)</span>
-      </div> */}
+      {/* Filtros */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-end gap-4">
+            {/* Filtro por Empleado */}
+            <div className="flex-1 min-w-[200px]">
+              <label htmlFor="employeeFilter" className="block text-sm font-medium text-gray-700 mb-2">
+                Filtrar por Empleado
+              </label>
+              <select
+                id="employeeFilter"
+                value={selectedEmployeeId}
+                onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#162F7F] focus:border-[#162F7F] outline-none text-sm"
+              >
+                <option value="">Todos los empleados</option>
+                {employees?.map((employee) => (
+                  <option key={employee.id} value={employee.id}>
+                    {employee.fullName || employee.name || employee.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtro por Semana */}
+            <div className="flex-1 min-w-[200px]">
+              <label htmlFor="weekFilter" className="block text-sm font-medium text-gray-700 mb-2">
+                Filtrar por Semana
+              </label>
+              <Input
+                id="weekFilter"
+                type="date"
+                value={selectedWeekStartDate}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const date = new Date(e.target.value);
+                    const weekStart = getWeekStart(date);
+                    setSelectedWeekStartDate(formatDate(weekStart));
+                  } else {
+                    setSelectedWeekStartDate("");
+                  }
+                }}
+                className="w-full"
+              />
+            </div>
+
+            {/* Botón para limpiar filtros */}
+            {hasActiveFilters && (
+              <div>
+                <Button
+                  variant="outline"
+                  onClick={handleClearFilters}
+                  className="flex items-center gap-2"
+                  size="sm"
+                >
+                  <X className="h-4 w-4" />
+                  Limpiar Filtros
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <AdvanceList
         advances={advances || []}

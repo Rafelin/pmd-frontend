@@ -50,7 +50,7 @@ export function useAttendance(filters?: {
 
 export function useAttendanceWeek(
   weekStartDate: string | null,
-  filters?: { filterByOrganization?: boolean },
+  filters?: { filterByOrganization?: boolean; work_id?: string },
 ) {
   const { token } = useAuthStore();
   
@@ -62,6 +62,9 @@ export function useAttendanceWeek(
     const params = new URLSearchParams();
     if (filters?.filterByOrganization) {
       params.append('filterByOrganization', 'true');
+    }
+    if (filters?.work_id) {
+      params.append('work_id', filters.work_id);
     }
     const qs = params.toString();
     const url = qs ? `/attendance/week/${weekStartDate}?${qs}` : `/attendance/week/${weekStartDate}`;

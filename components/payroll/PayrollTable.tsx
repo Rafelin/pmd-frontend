@@ -20,6 +20,25 @@ function formatMoney(value: unknown): string {
   return n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// Normalizar formato de fecha: convertir ISO string a yyyy-MM-dd
+function normalizeDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "-";
+  try {
+    // Si ya está en formato yyyy-MM-dd, devolverlo tal cual
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    // Si es un ISO string, extraer solo la parte de la fecha
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      return dateStr; // Si no se puede parsear, devolver el original
+    }
+    return date.toISOString().split("T")[0];
+  } catch {
+    return dateStr; // Si falla, devolver el original
+  }
+}
+
 export function PayrollTable({
   payments,
   groupBy = "none",
@@ -145,7 +164,7 @@ export function PayrollTable({
               return (
                 <tr key={p.id} className="hover:bg-gray-50">
                   {showWeekStartDate && (
-                    <td className="px-4 py-3 text-sm text-gray-700">{p.week_start_date}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{normalizeDate(p.week_start_date)}</td>
                   )}
                   <td className="px-4 py-3 text-sm text-gray-900">{employeeName}</td>
                   <td className="px-4 py-3 text-sm text-gray-700">{workName}</td>

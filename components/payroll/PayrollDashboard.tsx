@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -27,6 +27,29 @@ function formatDate(date: Date): string {
   return date.toISOString().split("T")[0];
 }
 
+// Normalizar fecha a formato yyyy-MM-dd para inputs de tipo date
+function normalizeDateForInput(dateStr: string | null | undefined): string {
+  if (!dateStr) {
+    return formatDate(getWeekStart(new Date()));
+  }
+  try {
+    // Si ya está en formato yyyy-MM-dd, devolverlo tal cual
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    // Si es un ISO string, extraer solo la parte de la fecha
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      // Si no se puede parsear, usar fecha actual
+      return formatDate(getWeekStart(new Date()));
+    }
+    return formatDate(getWeekStart(date));
+  } catch {
+    // Si falla, usar fecha actual
+    return formatDate(getWeekStart(new Date()));
+  }
+}
+
 export function PayrollDashboard({
   initialWeekStartDate,
   showWeekPicker = true,
@@ -36,15 +59,21 @@ export function PayrollDashboard({
 }) {
   const toast = useToast();
 
-  const [selectedDate, setSelectedDate] = useState<string>(
-    initialWeekStartDate
-      ? formatDate(getWeekStart(new Date(initialWeekStartDate)))
-      : formatDate(getWeekStart(new Date()))
-  );
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    return normalizeDateForInput(initialWeekStartDate);
+  });
   const [filterByOrganization, setFilterByOrganization] = useState(false);
   const [workId, setWorkId] = useState<string>("");
   const [groupBy, setGroupBy] = useState<"none" | "work" | "trade">("work");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Asegurar que selectedDate siempre esté en formato yyyy-MM-dd
+  useEffect(() => {
+    const normalized = normalizeDateForInput(selectedDate);
+    if (normalized !== selectedDate) {
+      setSelectedDate(normalized);
+    }
+  }, [selectedDate]);
 
   const weekStartDate = useMemo(() => {
     try {
@@ -77,9 +106,39 @@ export function PayrollDashboard({
     filterByOrganization,
   });
 
+  // Función auxiliar para normalizar fechas para comparación
+  const normalizeDateForComparison = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return "";
+    try {
+      // Si ya está en formato yyyy-MM-dd, devolverlo tal cual
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return dateStr;
+      }
+      // Si es un ISO string, extraer solo la parte de la fecha
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        return dateStr;
+      }
+      return date.toISOString().split("T")[0];
+    } catch {
+      return dateStr;
+    }
+  };
+
   const currentSummary = useMemo(() => {
-    return (summary || []).find((s) => s.week_start_date === weekStartDateStr) || null;
+    const normalizedSelected = normalizeDateForComparison(weekStartDateStr);
+    return (summary || []).find((s) => {
+      const normalizedSummary = normalizeDateForComparison(s.week_start_date);
+      return normalizedSummary === normalizedSelected;
+    }) || null;
   }, [summary, weekStartDateStr]);
+
+  // Detectar errores 429 específicamente
+  const isRateLimited = 
+    (weekError as any)?.response?.status === 429 || 
+    (weekError as any)?.status === 429 ||
+    (summaryError as any)?.response?.status === 429 ||
+    (summaryError as any)?.status === 429;
 
   const handleCalculate = async () => {
     setIsSubmitting(true);
@@ -138,16 +197,32 @@ export function PayrollDashboard({
     );
   }
 
+  // Mostrar mensaje específico para errores 429 (Too Many Requests)
+  if (isRateLimited) {
+    return (
+      <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-lg">
+        <div className="font-semibold mb-2">Demasiadas solicitudes</div>
+        <p className="text-sm">
+          El servidor está recibiendo demasiadas solicitudes. Por favor, espera unos momentos antes de intentar nuevamente.
+          Los datos anteriores se mantendrán visibles mientras tanto.
+        </p>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return <LoadingState message="Cargando nómina…" />;
   }
 
   if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-        Error al cargar nómina: {error.message || "Error desconocido"}
-      </div>
-    );
+    // No mostrar error si es 429 (ya se maneja arriba)
+    if (!isRateLimited) {
+      return (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          Error al cargar nómina: {error.message || "Error desconocido"}
+        </div>
+      );
+    }
   }
 
   return (
@@ -177,10 +252,13 @@ export function PayrollDashboard({
                 <label className="text-sm font-medium text-gray-700">Semana:</label>
                 <Input
                   type="date"
-                  value={selectedDate}
+                  value={normalizeDateForInput(selectedDate)}
                   onChange={(e) => {
-                    const date = e.target.value ? new Date(e.target.value) : new Date();
-                    setSelectedDate(formatDate(getWeekStart(date)));
+                    if (e.target.value) {
+                      const date = new Date(e.target.value);
+                      const normalized = formatDate(getWeekStart(date));
+                      setSelectedDate(normalized);
+                    }
                   }}
                   className="w-auto"
                 />
@@ -260,7 +338,7 @@ export function PayrollDashboard({
       <PayrollSummaryTable
         rows={summary || []}
         selectedWeekStartDate={weekStartDateStr}
-        onSelectWeek={(week) => setSelectedDate(week)}
+        onSelectWeek={(week) => setSelectedDate(normalizeDateForInput(week))}
       />
 
       <PayrollTable
