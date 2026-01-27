@@ -3,11 +3,13 @@
 import { useState, useMemo } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAttendance } from "@/hooks/api/attendance";
+import { useEmployees } from "@/hooks/api/employees";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { BotonVolver } from "@/components/ui/BotonVolver";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
+import { AttendanceSheet } from "@/components/attendance/AttendanceSheet";
 
 /**
  * Get Monday of the week for a given date
@@ -38,10 +40,18 @@ function AttendanceContent() {
     return selectedDate ? new Date(selectedDate) : getWeekStart(new Date());
   }, [selectedDate]);
 
-  const { attendance, isLoading, error, mutate } = useAttendance({
+  const { attendance, isLoading: isLoadingAttendance, error: attendanceError, mutate } = useAttendance({
     filterByOrganization,
     week_start_date: formatDate(weekStartDate),
   });
+
+  const { employees, isLoading: isLoadingEmployees, error: employeesError } = useEmployees({
+    filterByOrganization,
+    isActive: true,
+  });
+
+  const isLoading = isLoadingAttendance || isLoadingEmployees;
+  const error = attendanceError || employeesError;
 
   const handlePreviousWeek = () => {
     const newDate = new Date(weekStartDate);
@@ -64,9 +74,50 @@ function AttendanceContent() {
   }
 
   if (error) {
+    // Manejar específicamente errores 429 (Too Many Requests)
+    const isRateLimitError = 
+      (error as any)?.response?.status === 429 || 
+      (error as any)?.status === 429 ||
+      error?.message?.includes('429') ||
+      error?.message?.includes('Too Many Requests');
+    
+    if (isRateLimitError) {
+      return (
+        <div className="space-y-6">
+          <BotonVolver />
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+            <p className="font-semibold mb-2">Demasiadas solicitudes</p>
+            <p className="text-sm">
+              El servidor está recibiendo demasiadas solicitudes. Por favor, espera unos momentos antes de intentar nuevamente.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => mutate()}
+              className="mt-3"
+              size="sm"
+            >
+              Reintentar
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-        Error al cargar las asistencias: {error.message || "Error desconocido"}
+      <div className="space-y-6">
+        <BotonVolver />
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <p className="font-semibold mb-2">Error al cargar las asistencias</p>
+          <p className="text-sm">{error.message || "Error desconocido"}</p>
+          <Button
+            variant="outline"
+            onClick={() => mutate()}
+            className="mt-3"
+            size="sm"
+          >
+            Reintentar
+          </Button>
+        </div>
       </div>
     );
   }
@@ -115,7 +166,7 @@ function AttendanceContent() {
             </div>
 
             {/* Filtro por organización */}
-            <div className="flex items-center gap-2 ml-auto">
+            {/* <div className="flex items-center gap-2 ml-auto">
               <input
                 type="checkbox"
                 id="filterByOrganization"
@@ -129,7 +180,7 @@ function AttendanceContent() {
               >
                 Filtrar por mi organización
               </label>
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </Card>
@@ -164,29 +215,28 @@ function AttendanceContent() {
         </CardContent>
       </Card>
 
-      {/* Mensaje informativo */}
+      {/* Instrucciones */}
       <Card>
         <CardContent className="p-4 bg-blue-50 border-blue-200">
           <p className="text-sm text-blue-800">
-            <strong>Nota:</strong> Para ver y editar la planilla semanal completa,
-            haz clic en &quot;Ver Planilla Semanal&quot; o navega a la semana específica.
-            La planilla permite hacer clic en cada celda para cambiar el estado
-            de asistencia (Presente → Ausente → Tarde → Sin registro).
+            <strong>Instrucciones:</strong> Selecciona el estado de asistencia desde el menú desplegable en cada celda.
+            Si seleccionas &quot;Tarde&quot;, se abrirá un modal para ingresar las horas de tardanza.
           </p>
         </CardContent>
       </Card>
 
-      {/* Botón para ver planilla */}
-      <div className="flex justify-center">
-        <Button
-          variant="primary"
-          onClick={() => {
-            window.location.href = `/attendance/week/${formatDate(weekStartDate)}`;
-          }}
-        >
-          Ver Planilla Semanal
-        </Button>
-      </div>
+      {/* Planilla de asistencia */}
+      <Card>
+        <CardContent className="p-4">
+          <AttendanceSheet
+            employees={employees || []}
+            weekStartDate={weekStartDate}
+            attendance={attendance || []}
+            onRefresh={mutate}
+            isLoading={isLoading}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

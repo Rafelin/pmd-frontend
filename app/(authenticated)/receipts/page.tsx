@@ -123,7 +123,7 @@ export default function ReceiptsPage() {
                     </select>
                   </div>
 
-                  <div className="flex items-center gap-2 ml-auto">
+                  {/* <div className="flex items-center gap-2 ml-auto">
                     <input
                       type="checkbox"
                       id="filterByOrganizationReceipts"
@@ -137,7 +137,7 @@ export default function ReceiptsPage() {
                     >
                       Filtrar por mi organización
                     </label>
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </Card>

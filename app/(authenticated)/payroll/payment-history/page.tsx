@@ -67,7 +67,7 @@ export default function PayrollPaymentHistoryPage() {
                     </select>
                   </div>
 
-                  <div className="flex items-center gap-2 ml-auto">
+                  {/* <div className="flex items-center gap-2 ml-auto">
                     <input
                       type="checkbox"
                       id="filterByOrganization"
@@ -78,7 +78,7 @@ export default function PayrollPaymentHistoryPage() {
                     <label htmlFor="filterByOrganization" className="text-sm font-medium text-gray-700 cursor-pointer">
                       Filtrar por mi organización
                     </label>
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </Card>

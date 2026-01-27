@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAttendanceWeek } from "@/hooks/api/attendance";
 import { useEmployees } from "@/hooks/api/employees";
@@ -30,11 +31,19 @@ function formatDate(date: Date): string {
   return date.toISOString().split("T")[0];
 }
 
-function WeeklyAttendanceContent({ date }: { date: string }) {
+function WeeklyAttendanceContent() {
+  const router = useRouter();
+  const params = useParams();
   const [filterByOrganization, setFilterByOrganization] = useState(false);
+
+  // Get date from URL params
+  const date = typeof params?.date === "string" ? params.date : null;
 
   // Parse week start date from URL param
   const weekStartDate = useMemo(() => {
+    if (!date) {
+      return getWeekStart(new Date());
+    }
     try {
       const parsed = new Date(date);
       return getWeekStart(parsed);
@@ -59,17 +68,17 @@ function WeeklyAttendanceContent({ date }: { date: string }) {
   const handlePreviousWeek = () => {
     const newDate = new Date(weekStartDate);
     newDate.setDate(newDate.getDate() - 7);
-    window.location.href = `/attendance/week/${formatDate(newDate)}`;
+    router.push(`/attendance/week/${formatDate(newDate)}`);
   };
 
   const handleNextWeek = () => {
     const newDate = new Date(weekStartDate);
     newDate.setDate(newDate.getDate() + 7);
-    window.location.href = `/attendance/week/${formatDate(newDate)}`;
+    router.push(`/attendance/week/${formatDate(newDate)}`);
   };
 
   const handleToday = () => {
-    window.location.href = `/attendance/week/${formatDate(getWeekStart(new Date()))}`;
+    router.push(`/attendance/week/${formatDate(getWeekStart(new Date()))}`);
   };
 
   if (isLoading) {
@@ -77,17 +86,57 @@ function WeeklyAttendanceContent({ date }: { date: string }) {
   }
 
   if (error) {
+    // Manejar específicamente errores 429 (Too Many Requests)
+    const isRateLimitError = 
+      (error as any)?.response?.status === 429 || 
+      (error as any)?.status === 429 ||
+      error?.message?.includes('429') ||
+      error?.message?.includes('Too Many Requests');
+    
+    if (isRateLimitError) {
+      return (
+        <div className="space-y-6">
+          <BotonVolver backTo="/attendance" />
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+            <p className="font-semibold mb-2">Demasiadas solicitudes</p>
+            <p className="text-sm">
+              El servidor está recibiendo demasiadas solicitudes. Por favor, espera unos momentos antes de intentar nuevamente.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => mutate()}
+              className="mt-3"
+              size="sm"
+            >
+              Reintentar
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-        Error al cargar la planilla:{" "}
-        {error.message || "Error desconocido"}
+      <div className="space-y-6">
+        <BotonVolver backTo="/attendance" />
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <p className="font-semibold mb-2">Error al cargar la planilla</p>
+          <p className="text-sm">{error.message || "Error desconocido"}</p>
+          <Button
+            variant="outline"
+            onClick={() => mutate()}
+            className="mt-3"
+            size="sm"
+          >
+            Reintentar
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <BotonVolver />
+      <BotonVolver backTo="/attendance" />
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">
           Planilla Semanal de Asistencia
@@ -128,7 +177,7 @@ function WeeklyAttendanceContent({ date }: { date: string }) {
               </Button>
             </div>
 
-            <div className="flex items-center gap-2 ml-auto">
+            {/* <div className="flex items-center gap-2 ml-auto">
               <input
                 type="checkbox"
                 id="filterByOrganization"
@@ -142,7 +191,7 @@ function WeeklyAttendanceContent({ date }: { date: string }) {
               >
                 Filtrar por mi organización
               </label>
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </Card>
@@ -171,14 +220,10 @@ function WeeklyAttendanceContent({ date }: { date: string }) {
   );
 }
 
-export default function WeeklyAttendancePage({
-  params,
-}: {
-  params: { date: string };
-}) {
+export default function WeeklyAttendancePage() {
   return (
     <ProtectedRoute>
-      <WeeklyAttendanceContent date={params.date} />
+      <WeeklyAttendanceContent />
     </ProtectedRoute>
   );
 }

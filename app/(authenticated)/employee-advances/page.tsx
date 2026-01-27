@@ -72,7 +72,7 @@ function EmployeeAdvancesContent() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+      {/* <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
         <input
           type="checkbox"
           id="filterByOrganization"
@@ -84,7 +84,7 @@ function EmployeeAdvancesContent() {
           Filtrar por mi organización
         </label>
         <span className="text-xs text-gray-500">(Por defecto se muestran todos los adelantos)</span>
-      </div>
+      </div> */}
 
       <AdvanceList
         advances={advances || []}

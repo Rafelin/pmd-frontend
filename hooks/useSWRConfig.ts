@@ -28,8 +28,15 @@ export const swrConfig: SWRConfiguration = {
   revalidateOnFocus: false, // No revalidar cuando la ventana recupera el foco
   revalidateOnReconnect: true, // Revalidar cuando se reconecta a internet
   shouldRetryOnError: (error: any) => {
+    // No reintentar en errores 429 (Too Many Requests) para evitar bucles infinitos
+    // El servidor ya está indicando que hay demasiadas solicitudes
+    if (error?.response?.status === 429 || error?.status === 429) {
+      return false;
+    }
     // Don't retry on 401, 403, or 404
-    if (error?.status === 401 || error?.status === 403 || error?.status === 404) {
+    if (error?.response?.status === 401 || error?.status === 401 ||
+        error?.response?.status === 403 || error?.status === 403 ||
+        error?.response?.status === 404 || error?.status === 404) {
       return false;
     }
     // Don't retry on timeout or network errors (they will be retried by SWR's default mechanism)

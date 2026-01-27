@@ -53,16 +53,6 @@ function getAttendanceForDate(
   );
 }
 
-/**
- * Cycle through attendance status: null -> PRESENT -> ABSENT -> LATE -> null
- */
-function getNextStatus(currentStatus: AttendanceStatus | null): AttendanceStatus | null {
-  if (!currentStatus) return AttendanceStatus.PRESENT;
-  if (currentStatus === AttendanceStatus.PRESENT) return AttendanceStatus.ABSENT;
-  if (currentStatus === AttendanceStatus.ABSENT) return AttendanceStatus.LATE;
-  return null; // LATE -> null (delete)
-}
-
 export function AttendanceSheet({
   employees,
   weekStartDate,
@@ -81,25 +71,27 @@ export function AttendanceSheet({
   const weekDates = getWeekDates(weekStartDate);
   const weekStartDateStr = formatDate(weekStartDate);
 
-  const handleCellClick = async (
+  const handleStatusChange = async (
     employeeId: string,
     date: string,
-    currentAttendance: Attendance | null
+    newStatus: AttendanceStatus | null
   ) => {
     if (isSubmitting || isLoading) return;
 
-    const currentStatus = currentAttendance?.status || null;
-    const nextStatus = getNextStatus(currentStatus);
-
-    // If next status is LATE, show modal for late hours
-    if (nextStatus === AttendanceStatus.LATE) {
+    // Si el estado es LATE, mostrar modal para horas primero
+    if (newStatus === AttendanceStatus.LATE) {
       setSelectedCell({ employeeId, date });
       setShowLateHoursModal(true);
       return;
     }
 
-    // Otherwise, create/update/delete attendance
-    await updateAttendance(employeeId, date, nextStatus, null);
+    // Para otros estados, actualizar directamente
+    await updateAttendance(employeeId, date, newStatus, null);
+  };
+
+  const handleLateHoursClick = (employeeId: string, date: string) => {
+    setSelectedCell({ employeeId, date });
+    setShowLateHoursModal(true);
   };
 
   const handleLateHoursConfirm = async (hours: number) => {
@@ -243,8 +235,11 @@ export function AttendanceSheet({
                           <AttendanceCell
                             status={cellAttendance?.status || null}
                             lateHours={cellAttendance?.late_hours || null}
-                            onClick={() =>
-                              handleCellClick(employee.id, dateStr, cellAttendance)
+                            onChange={(newStatus) =>
+                              handleStatusChange(employee.id, dateStr, newStatus)
+                            }
+                            onLateHoursClick={() =>
+                              handleLateHoursClick(employee.id, dateStr)
                             }
                             disabled={isSubmitting || isLoading}
                           />
